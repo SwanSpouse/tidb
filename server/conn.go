@@ -657,6 +657,7 @@ func (cc *clientConn) Run(ctx context.Context) {
 		waitTimeout := cc.getSessionVarsWaitTimeout(ctx)
 		cc.pkt.setReadTimeout(time.Duration(waitTimeout) * time.Second)
 		start := time.Now()
+		// 在这里读取客户端的数据
 		data, err := cc.readPacket()
 		if err != nil {
 			if terror.ErrorNotEqual(err, io.EOF) {
@@ -683,6 +684,7 @@ func (cc *clientConn) Run(ctx context.Context) {
 		}
 
 		startTime := time.Now()
+		// 在这里对数据进行分发
 		if err = cc.dispatch(ctx, data); err != nil {
 			if terror.ErrorEqual(err, io.EOF) {
 				cc.addMetrics(data[0], startTime, nil)
@@ -826,6 +828,7 @@ func (cc *clientConn) dispatch(ctx context.Context, data []byte) error {
 			pprof.SetGoroutineLabels(ctx)
 		}
 	}
+	// 这个token是用来做并发控制的
 	token := cc.server.getToken()
 	defer func() {
 		// if handleChangeUser failed, cc.ctx may be nil

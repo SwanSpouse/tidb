@@ -362,6 +362,7 @@ func (s *Server) Close() {
 }
 
 // onConn runs in its own goroutine, handles queries from this connection.
+// 在这里处理每一个请求
 func (s *Server) onConn(conn *clientConn) {
 	ctx := logutil.WithConnID(context.Background(), conn.connectionID)
 	if err := conn.handshake(ctx); err != nil {
