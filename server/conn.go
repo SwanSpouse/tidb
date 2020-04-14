@@ -174,9 +174,11 @@ func (cc *clientConn) String() string {
 // during handshake, client and server negotiate compatible features and do authentication.
 // After handshake, client can send sql query to server.
 func (cc *clientConn) handshake(ctx context.Context) error {
+	// 服务端首先会向客户端发送packetZ
 	if err := cc.writeInitialHandshake(); err != nil {
 		return err
 	}
+	// 接受客户端的packet
 	if err := cc.readOptionalSSLRequestAndHandshakeResponse(ctx); err != nil {
 		err1 := cc.writeError(err)
 		if err1 != nil {
@@ -191,7 +193,7 @@ func (cc *clientConn) handshake(ctx context.Context) error {
 		data = dumpUint16(data, mysql.ServerStatusAutocommit)
 		data = append(data, 0, 0)
 	}
-
+	// 最后回复客户端的packet
 	err := cc.writePacket(data)
 	cc.pkt.sequence = 0
 	if err != nil {
