@@ -288,7 +288,7 @@ func setSSLVariable(ca, key, cert string) {
 // Run runs the server.
 func (s *Server) Run() error {
 
-	logutil.BgLogger().Warn("==================================>>>>>>>> copy server to socket failed")
+	fmt.Println("================= run the server")
 
 	metrics.ServerEventCounter.WithLabelValues(metrics.EventStart).Inc()
 
