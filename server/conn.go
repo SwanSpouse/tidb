@@ -1372,6 +1372,9 @@ func (cc *clientConn) handleQuery(ctx context.Context, sql string) (err error) {
 	defer trace.StartRegion(ctx, "handleQuery").End()
 	sc := cc.ctx.GetSessionVars().StmtCtx
 	prevWarns := sc.GetWarnings()
+
+	fmt.Printf("=======>>>> current sql: %s\n", sql)
+
 	stmts, err := cc.ctx.Parse(ctx, sql)
 	if err != nil {
 		metrics.ExecuteErrorCounter.WithLabelValues(metrics.ExecuteErrorToLabel(err)).Inc()
@@ -1397,6 +1400,7 @@ func (cc *clientConn) handleQuery(ctx context.Context, sql string) (err error) {
 		defer cc.ctx.ClearValue(plannercore.PointPlanKey)
 	}
 	for i, stmt := range stmts {
+		fmt.Printf("============>>>> current stmt:%+v \n", stmt)
 		if len(pointPlans) > 0 {
 			// Save the point plan in Session so we don't need to build the point plan again.
 			cc.ctx.SetValue(plannercore.PointPlanKey, plannercore.PointPlanVal{Plan: pointPlans[i]})
@@ -1509,6 +1513,9 @@ func (cc *clientConn) prefetchPointPlanKeys(ctx context.Context, stmts []ast.Stm
 func (cc *clientConn) handleStmt(ctx context.Context, stmt ast.StmtNode, warns []stmtctx.SQLWarn, lastStmt bool) error {
 	ctx = context.WithValue(ctx, execdetails.StmtExecDetailKey, &execdetails.StmtExecDetails{})
 	reg := trace.StartRegion(ctx, "ExecuteStmt")
+
+	logutil.BgLogger().Info("=======>>>> ExecuteStmt, stmt:%+v", zap.Any("d", stmt))
+
 	rs, err := cc.ctx.ExecuteStmt(ctx, stmt)
 	reg.End()
 	// The session tracker detachment from global tracker is solved in the `rs.Close` in most cases.
