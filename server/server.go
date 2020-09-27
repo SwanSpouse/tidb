@@ -287,6 +287,9 @@ func setSSLVariable(ca, key, cert string) {
 
 // Run runs the server.
 func (s *Server) Run() error {
+
+	logutil.BgLogger().Warn("==================================>>>>>>>> copy server to socket failed")
+
 	metrics.ServerEventCounter.WithLabelValues(metrics.EventStart).Inc()
 
 	// Start HTTP API to report tidb info such as TPS.
