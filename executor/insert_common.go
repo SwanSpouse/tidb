@@ -16,6 +16,7 @@ package executor
 import (
 	"context"
 	"math"
+	"fmt"
 
 	"github.com/pingcap/errors"
 	"github.com/pingcap/parser/ast"
@@ -203,6 +204,9 @@ func (e *InsertValues) processSetList() error {
 
 // insertRows processes `insert|replace into values ()` or `insert|replace into set x=y`
 func insertRows(ctx context.Context, base insertCommon) (err error) {
+
+	logutil.BgLogger().Info(fmt.Sprintf("[===== insert process =====]insertRows base:%+v", base))
+
 	e := base.insertCommon()
 	// For `insert|replace into set x=y`, process the set list here.
 	if err = e.processSetList(); err != nil {
@@ -221,6 +225,7 @@ func insertRows(ctx context.Context, base insertCommon) (err error) {
 	rows := make([][]types.Datum, 0, len(e.Lists))
 	memUsageOfRows := int64(0)
 	memTracker := e.memTracker
+
 	for i, list := range e.Lists {
 		e.rowCount++
 		var row []types.Datum
@@ -261,6 +266,9 @@ func insertRows(ctx context.Context, base insertCommon) (err error) {
 	if err != nil {
 		return err
 	}
+
+	logutil.BgLogger().Info(fmt.Sprintf("[===== insert process =====] base.exec(ctx, rows):%+v", rows))
+
 	memTracker.Consume(-memUsageOfRows)
 	return nil
 }

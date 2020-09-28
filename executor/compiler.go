@@ -15,6 +15,8 @@ package executor
 
 import (
 	"context"
+	"fmt"
+	"github.com/pingcap/tidb/util/logutil"
 
 	"github.com/opentracing/opentracing-go"
 	"github.com/pingcap/parser/ast"
@@ -63,6 +65,8 @@ func (c *Compiler) Compile(ctx context.Context, stmtNode ast.StmtNode) (*ExecStm
 	if err != nil {
 		return nil, err
 	}
+
+	logutil.BgLogger().Info(fmt.Sprintf("[===== insert process =====]Planner Optimize:%+v", finalPlan))
 
 	CountStmtNode(stmtNode, c.Ctx.GetSessionVars().InRestrictedSQL)
 	var lowerPriority bool

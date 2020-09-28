@@ -1144,9 +1144,13 @@ func (s *session) ExecuteStmt(ctx context.Context, stmtNode ast.StmtNode) (sqlex
 		return nil, err
 	}
 
+	logutil.BgLogger().Info(fmt.Sprintf("[===== insert process =====]Start Execute, Ast.StmtNode:%+v", stmtNode))
 	// Transform abstract syntax tree to a physical plan(stored in executor.ExecStmt).
 	compiler := executor.Compiler{Ctx: s}
 	stmt, err := compiler.Compile(ctx, stmtNode)
+
+	logutil.BgLogger().Info(fmt.Sprintf("[===== insert process =====]After Compile, ExecStmt:%v", stmt))
+
 	if err != nil {
 		s.rollbackOnError(ctx)
 
@@ -1168,7 +1172,11 @@ func (s *session) ExecuteStmt(ctx context.Context, stmtNode ast.StmtNode) (sqlex
 
 	// Execute the physical plan.
 	logStmt(stmt, s.sessionVars)
+
 	recordSet, err := runStmt(ctx, s, stmt)
+
+	logutil.BgLogger().Info(fmt.Sprintf("[===== insert process =====]Run Stmt, RecordSet:%v", recordSet))
+
 	if err != nil {
 		if !kv.ErrKeyExists.Equal(err) {
 			logutil.Logger(ctx).Warn("run statement failed",

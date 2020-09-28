@@ -981,6 +981,7 @@ func (cc *clientConn) dispatch(ctx context.Context, data []byte) error {
 			data = data[:len(data)-1]
 			dataStr = string(hack.String(data))
 		}
+		logutil.BgLogger().Info(fmt.Sprintf("[===== insert process =====]data:%s", dataStr))
 		return cc.handleQuery(ctx, dataStr)
 	case mysql.ComFieldList:
 		return cc.handleFieldList(ctx, dataStr)
@@ -1071,6 +1072,8 @@ func (cc *clientConn) writeOkWith(ctx context.Context, msg string, affectedRows,
 		// it is actually string<lenenc>
 		data = dumpLengthEncodedString(data, []byte(msg))
 	}
+
+	logutil.BgLogger().Warn(fmt.Sprintf("=====> handleQuerySpecial: status %d, warnCnt:%d", status, warnCnt))
 
 	err := cc.writePacket(data)
 	if err != nil {
@@ -1365,6 +1368,9 @@ func (cc *clientConn) handleQuery(ctx context.Context, sql string) (err error) {
 	defer trace.StartRegion(ctx, "handleQuery").End()
 	sc := cc.ctx.GetSessionVars().StmtCtx
 	prevWarns := sc.GetWarnings()
+
+	logutil.BgLogger().Info(fmt.Sprintf("[===== insert process =====]Start Parase:%s", sql))
+
 	stmts, err := cc.ctx.Parse(ctx, sql)
 	if err != nil {
 		metrics.ExecuteErrorCounter.WithLabelValues(metrics.ExecuteErrorToLabel(err)).Inc()
@@ -1390,6 +1396,8 @@ func (cc *clientConn) handleQuery(ctx context.Context, sql string) (err error) {
 		defer cc.ctx.ClearValue(plannercore.PointPlanKey)
 	}
 	for i, stmt := range stmts {
+		logutil.BgLogger().Info(fmt.Sprintf("[===== insert process =====]Current Stmts:%+v", stmt))
+
 		if len(pointPlans) > 0 {
 			// Save the point plan in Session so we don't need to build the point plan again.
 			cc.ctx.SetValue(plannercore.PointPlanKey, plannercore.PointPlanVal{Plan: pointPlans[i]})
@@ -1502,6 +1510,7 @@ func (cc *clientConn) prefetchPointPlanKeys(ctx context.Context, stmts []ast.Stm
 func (cc *clientConn) handleStmt(ctx context.Context, stmt ast.StmtNode, warns []stmtctx.SQLWarn, lastStmt bool) error {
 	ctx = context.WithValue(ctx, execdetails.StmtExecDetailKey, &execdetails.StmtExecDetails{})
 	reg := trace.StartRegion(ctx, "ExecuteStmt")
+
 	rs, err := cc.ctx.ExecuteStmt(ctx, stmt)
 	reg.End()
 	// The session tracker detachment from global tracker is solved in the `rs.Close` in most cases.

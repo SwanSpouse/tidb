@@ -313,6 +313,8 @@ func (a *ExecStmt) Exec(ctx context.Context) (_ sqlexec.RecordSet, err error) {
 		sctx.GetSessionVars().StmtCtx.MemTracker.SetBytesLimit(sctx.GetSessionVars().StmtCtx.MemQuotaQuery)
 	}
 
+	logutil.BgLogger().Info(fmt.Sprintf("[===== insert process =====]buildExecutor"))
+
 	e, err := a.buildExecutor()
 	if err != nil {
 		return nil, err
@@ -514,6 +516,8 @@ func (a *ExecStmt) handleNoDelayExecutor(ctx context.Context, e Executor) (sqlex
 		terror.Log(e.Close())
 		a.logAudit()
 	}()
+
+	logutil.BgLogger().Info(fmt.Sprintf("[===== insert process =====]Before Next"))
 
 	err = Next(ctx, e, newFirstChunk(e))
 	if err != nil {
